@@ -177,8 +177,13 @@ function! s:ExecuteRename(linter, options) abort
     call ale#lsp_linter#StartLSP(l:buffer, a:linter, l:Callback)
 endfunction
 
-function! ale#rename#Execute() abort
+function! ale#rename#OnNameResolve(new_name) abort
     let l:lsp_linters = []
+
+    if empty(a:new_name)
+        call s:message('New name cannot be empty!')
+        return
+    endif
 
     for l:linter in ale#linter#Get(&filetype)
         if !empty(l:linter.lsp)
@@ -193,18 +198,22 @@ function! ale#rename#Execute() abort
     endif
 
     let l:old_name = expand('<cword>')
-    let l:new_name = ale#util#Input('New name: ', l:old_name)
-
-    if empty(l:new_name)
-        call s:message('New name cannot be empty!')
-
-        return
-    endif
-
     for l:lsp_linter in l:lsp_linters
         call s:ExecuteRename(l:lsp_linter, {
         \   'old_name': l:old_name,
-        \   'new_name': l:new_name,
+        \   'new_name': a:new_name,
         \})
     endfor
+endfunction
+
+function! ale#rename#Execute() abort
+    let l:prompt = 'New name: '
+
+    if has('nvim')
+        lua vim.ui.input('New name: ', vim.fn['ale#rename#OnNameResolve'])
+        return
+    endif
+
+    let l:new_name = ale#util#Input(l:prompt, l:old_name)
+    call function('ale#rename#OnNameResolve', l:new_name)
 endfunction
