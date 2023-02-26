@@ -19,6 +19,7 @@ endfunction
 
 let g:ale_rename_tsserver_find_in_comments = get(g:, 'ale_rename_tsserver_find_in_comments')
 let g:ale_rename_tsserver_find_in_strings = get(g:, 'ale_rename_tsserver_find_in_strings')
+let g:ale_prefer_nvim_input = get(g:, 'ale_prefer_nvim_input', 0) && has('nvim')
 
 function! s:message(message) abort
     call ale#util#Execute('echom ' . string(a:message))
@@ -177,7 +178,7 @@ function! s:ExecuteRename(linter, options) abort
     call ale#lsp_linter#StartLSP(l:buffer, a:linter, l:Callback)
 endfunction
 
-function! ale#rename#OnNameResolve(new_name) abort
+function! ale#rename#OnNameResolve(new_name, old_name) abort
     let l:lsp_linters = []
 
     if empty(a:new_name)
@@ -197,20 +198,32 @@ function! ale#rename#OnNameResolve(new_name) abort
         return
     endif
 
-    let l:old_name = expand('<cword>')
     for l:lsp_linter in l:lsp_linters
         call s:ExecuteRename(l:lsp_linter, {
-        \   'old_name': l:old_name,
+        \   'old_name': a:old_name,
         \   'new_name': a:new_name,
         \})
     endfor
 endfunction
 
+if g:ale_prefer_nvim_input
+lua << EOF
+    function aleRenameNvim(prompt, old_name)
+        local function onResolve(new_name)
+            vim.fn['ale#rename#OnNameResolve'](new_name, old_name)
+        end
+
+        vim.ui.input({prompt = prompt, default = old_name}, onResolve)
+    end
+EOF
+endif
+
 function! ale#rename#Execute() abort
+    let l:old_name = expand('<cword>')
     let l:prompt = 'New name: '
 
-    if has('nvim')
-        lua vim.ui.input('New name: ', vim.fn['ale#rename#OnNameResolve'])
+    if g:ale_prefer_nvim_input
+        call v:lua.aleRenameNvim(l:prompt, l:old_name)
         return
     endif
 
