@@ -177,7 +177,7 @@ function! s:ExecuteRename(linter, options) abort
     call ale#lsp_linter#StartLSP(l:buffer, a:linter, l:Callback)
 endfunction
 
-function! ale#rename#Execute() abort
+function! ale#rename#Execute(...) abort
     let l:linters = ale#lsp_linter#GetEnabled(bufnr(''))
 
     if empty(l:linters)
@@ -187,7 +187,12 @@ function! ale#rename#Execute() abort
     endif
 
     let l:old_name = expand('<cword>')
-    let l:new_name = ale#util#Input('New name: ', l:old_name)
+
+    if a:0 > 0
+        let l:new_name = a:1
+    else
+        let l:new_name = ale#util#Input('New name: ', l:old_name)
+    endif
 
     if empty(l:new_name)
         call s:message('New name cannot be empty!')
