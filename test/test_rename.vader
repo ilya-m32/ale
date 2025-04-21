@@ -492,3 +492,42 @@ Execute(LSP rename requests should be sent):
 
   AssertEqual {'42': {'old_name': 'foo', 'new_name': 'a-new-name'}},
   \ ale#rename#GetMap()
+
+Execute(LSP rename requests should be sent with preset name):
+  call ale#rename#SetMap({})
+  runtime ale_linters/python/pylsp.vim
+  let b:ale_linters = ['pylsp']
+  call setpos('.', [bufnr(''), 1, 5, 0])
+
+  call ale#rename#Execute('a-new-predefined-name')
+
+  " We shouldn't register the callback yet.
+  AssertEqual '''''', string(g:Callback)
+
+  AssertEqual type(function('type')), type(g:InitCallback)
+  call g:InitCallback()
+
+  AssertEqual 'rename', g:capability_checked
+  AssertEqual
+  \ 'function(''ale#rename#HandleLSPResponse'')',
+  \ string(g:Callback)
+
+  AssertEqual
+  \ [
+  \   [1, 'textDocument/didChange', {
+  \     'textDocument': {
+  \         'uri': ale#path#ToFileURI(expand('%:p')),
+  \         'version': g:ale_lsp_next_version_id - 1,
+  \     },
+  \     'contentChanges': [{'text': join(getline(1, '$'), "\n") . "\n"}]
+  \   }],
+  \   [0, 'textDocument/rename', {
+  \   'textDocument': {'uri': ale#path#ToFileURI(expand('%:p'))},
+  \   'position': {'line': 0, 'character': 2},
+  \   'newName': 'a-new-predefined-name',
+  \   }],
+  \ ],
+  \ g:message_list
+
+  AssertEqual {'42': {'old_name': 'foo', 'new_name': 'a-new-name'}},
+  \ ale#rename#GetMap()

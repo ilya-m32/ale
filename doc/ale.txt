@@ -4201,10 +4201,17 @@ documented in additional help files.
   The rename operation will not save modified buffers when 'hidden' is on
   unless |g:ale_save_hidden| is `true` or `1`.
 
+  Supports an optional argument `new_name`, which it uses instead of prompting
+  for input. This is useful when leveraging a custom input method, such as `vim.ui.input` from
+  Neovim.
+
 
 :ALEFileRename                                                 *:ALEFileRename*
 
   Rename a file and fix imports using `tsserver`.
+
+  Supports an optional argument `new_name`, which it will use instead of asking
+  for input.
 
 
 :ALECodeAction                                                 *:ALECodeAction*

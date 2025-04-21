@@ -93,7 +93,7 @@ function! s:ExecuteFileRename(linter, options) abort
     call ale#lsp_linter#StartLSP(l:buffer, a:linter, l:Callback)
 endfunction
 
-function! ale#filerename#Execute() abort
+function! ale#filerename#Execute(...) abort
     let l:buffer = bufnr('')
     let l:lsp_linters = []
 
@@ -110,7 +110,12 @@ function! ale#filerename#Execute() abort
     endif
 
     let l:old_name = expand('#' . l:buffer . ':p')
-    let l:new_name = ale#util#Input('New file name: ', l:old_name, 'file')
+
+    if a:0 > 0
+        let l:new_name = a:1
+    else
+        let l:new_name = ale#util#Input('New file name: ', l:old_name, 'file')
+    endif
 
     if l:old_name is# l:new_name
         call s:message('New file name matches old file name')
