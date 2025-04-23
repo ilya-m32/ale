@@ -17,6 +17,15 @@ function! ale#preview#SetLastSelection(item_list, options) abort
     \}
 endfunction
 
+function! ale#preview#ShowAsync(item_list, ...) abort
+    let l:options = get(a:000, 0, {})
+    call luaeval('require("ale.util").aleFileSelectAsync(_A)', {
+        \ 'item_list': a:item_list,
+        \ 'options': l:options
+        \})
+endfunction
+
+
 " Open a preview window and show some lines in it.
 " A second argument can be passed as a Dictionary with options. They are...
 "
@@ -85,7 +94,12 @@ function! ale#preview#ShowSelection(item_list, ...) abort
         \)
     endfor
 
-    call ale#preview#Show(l:lines, {'filetype': 'ale-preview-selection'})
+    if has('nvim')
+        call ale#preview#ShowAsync(a:item_list, {'filetype': 'ale-preview-selection'})
+    else
+        call ale#preview#Show(l:lines, {'filetype': 'ale-preview-selection'})
+    endif
+
     let b:ale_preview_item_list = a:item_list
     let b:ale_preview_item_open_in = get(l:options, 'open_in', 'current-buffer')
 
